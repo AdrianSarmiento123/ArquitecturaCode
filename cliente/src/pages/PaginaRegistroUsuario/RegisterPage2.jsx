@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-//import './RegisterPage2.css'; // Asegúrate que la ruta sea correcta
-//import Pie from '../../ComponentesGeneral/footer';
+import Turnstile from 'react-turnstile'; // AÑADIDO
 
 const RegisterPageCliente = () => {
-    // --- ESTADO (SIN especialidad, SIN role, SIN bio) ---
     const [formData, setFormData] = useState({
         nombre: '',
         apellido: '',
+        identidad: '', // AÑADIDO
         correo: '',
         password: '',
         confirmPassword: '',
     });
+
+    const [captchaToken, setCaptchaToken] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -21,13 +22,12 @@ const RegisterPageCliente = () => {
         const { confirmPassword, ...dataToSend } = userData;
 
         try {
-            // --- URL APUNTANDO A LA NUEVA RUTA DE CLIENTE ---
-            const response = await fetch('http://localhost:3001/usuarios/register/usuario', { // <-- Nueva URL
+            const response = await fetch('http://localhost:3001/usuarios/register/usuario', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend),
+                body: JSON.stringify({ ...dataToSend, captchaToken }),
             });
 
             const responseData = await response.json();
@@ -40,18 +40,23 @@ const RegisterPageCliente = () => {
                 return;
             }
 
-            alert('Cliente registrado exitosamente!'); // Mensaje específico
+            alert('Cliente registrado exitosamente!');
             console.log('Registered client user:', responseData);
-            setFormData({ // Limpiar formulario
-                 nombre: '', apellido: '', correo: '', password: '', confirmPassword: ''
+            setFormData({
+                nombre: '',
+                apellido: '',
+                identidad: '',
+                correo: '',
+                password: '',
+                confirmPassword: ''
             });
-
+            setCaptchaToken('');
         } catch (error) {
-            console.error('Error registering client user:', error); // Mensaje específico
+            console.error('Error registering client user:', error);
             if (error instanceof SyntaxError) {
-                 alert('Ocurrió un error al procesar la respuesta del servidor.');
+                alert('Ocurrió un error al procesar la respuesta del servidor.');
             } else {
-                 alert('Ocurrió un error de red al intentar registrar el usuario.');
+                alert('Ocurrió un error de red al intentar registrar el usuario.');
             }
         }
     };
@@ -64,43 +69,92 @@ const RegisterPageCliente = () => {
             return;
         }
 
-        // --- VALIDACIÓN (SIN especialidad, SIN role, SIN bio) ---
-        if (!formData.nombre || !formData.apellido || !formData.correo || !formData.password) {
-             alert('Faltan campos requeridos (nombre, apellido, correo, contraseña).'); // Mensaje específico
-             return;
+        if (!formData.nombre || !formData.apellido || !formData.identidad || !formData.correo || !formData.password) {
+            alert('Faltan campos requeridos.');
+            return;
+        }
+
+        if (!captchaToken) {
+            alert('Por favor completa el CAPTCHA.');
+            return;
         }
 
         console.log('Form data to be sent:', formData);
         registerUser(formData);
     };
 
-    // --- JSX (SIN especialidad, SIN role, SIN bio) ---
     return (
         <div>
-            <h2>Registro de Usuario</h2> {/* Título específico */}
+            <h2>Registro de Usuario</h2>
             <form onSubmit={handleSubmit}>
                 <div>
                     <label>Nombre:</label>
-                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
+                    <input
+                        type="text"
+                        name="nombre"
+                        value={formData.nombre}
+                        onChange={handleChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Apellido:</label>
-                    <input type="text" name="apellido" value={formData.apellido} onChange={handleChange} required />
+                    <input
+                        type="text"
+                        name="apellido"
+                        value={formData.apellido}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div>
+                    <label>Identidad (DNI o RUC):</label>
+                    <input
+                        type="text"
+                        name="identidad"
+                        value={formData.identidad}
+                        onChange={handleChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Correo Electrónico:</label>
-                    <input type="email" name="correo" value={formData.correo} onChange={handleChange} required />
+                    <input
+                        type="email"
+                        name="correo"
+                        value={formData.correo}
+                        onChange={handleChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Contraseña:</label>
-                    <input type="password" name="password" value={formData.password} onChange={handleChange} required />
+                    <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
                 </div>
                 <div>
                     <label>Confirmar Contraseña:</label>
-                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required />
+                    <input
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                    />
                 </div>
-                {/* Quitamos los campos de Rol, Especialidad y Bio */}
-                <button type="submit">Registrarse como Usuario</button> {/* Texto botón específico */}
+                <div>
+                    <label>Verificación de Seguridad:</label>
+                    <Turnstile
+                        sitekey="0x4AAAAAABkE_EeCCwrHE8PT" // Reemplaza por tu site key real
+                        onVerify={(token) => setCaptchaToken(token)}
+                    />
+                </div>
+                <button type="submit">Registrarse como Usuario</button>
             </form>
         </div>
     );

@@ -6,8 +6,17 @@
 *     (en carpeta cliente)
 *     npm install
 *     npm start
+*     npm install react-turnstile
 
 3er paso
 *     (en carpeta servidor)
 *     npm install
 *     npm start
+*     npm install react-turnstile
+*     npm install axios
+*     npm install express-rate-limit rate-limit-redis ioredis
+*     npm install multer
+*     npm install dotenv
+*     npm install nodemailer  
+4 en la carpeta raíz
+*     npm install express-validator

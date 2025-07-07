@@ -1,63 +1,60 @@
 import React, { useState } from 'react'; 
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import Turnstile from 'react-turnstile'; // Importa Turnstile
 import './LoginPage1.css'; 
-
 
 function LoginPage1() {
   const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
   const [error, setError] = useState(''); 
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
 
-  // Manejador para el envío del formulario de login
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true); 
     setError(''); 
 
     try {
-      const res = await axios.post('http://localhost:3001/usuarios/login', {
-        correo,
-        password,
-      });
+      const payload = { correo, password, captchaToken };
+
+      const res = await axios.post('http://localhost:3001/usuarios/login', payload);
 
       const { token, user } = res.data;
 
-      // Guardar sesión
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      setIsLoading(false); // Finalizar estado de carga
+      setIsLoading(false); 
 
-      // Redirigir según el rol
       if (user.role === 'usuario') {
-        navigate(`/dashboard/usuario/${user.id}`);//modificar esto 
+        navigate(`/dashboard/usuario/${user.id}`);
       } else if (user.role === 'entidad') {
-        navigate(`/dashboard/entidad/${user.id}`);//modificar esto 
+        navigate(`/dashboard/entidad/${user.id}`);
       } else {
         setError('Rol no reconocido. Por favor, contacta a soporte.');
       }
 
     } catch (err) {
       setIsLoading(false); 
-      setError(err.response?.data?.error || 'Error al iniciar sesión. Verifica tus credenciales.');
+
+      const data = err.response?.data;
+      setError(data?.error || 'Error al iniciar sesión. Verifica tus credenciales.');
+
       console.error("Error en el login:", err.response || err.message || err);
     }
   };
 
   return (
-    // Contenedor principal de la página de login
     <div className="login-page-container">
-      {/* Tarjeta o contenedor del formulario */}
       <div className="login-form-card">
         <h2 className="login-title">Iniciar Sesión</h2>
-        {/* Muestra el mensaje de error si existe */}
+        
         {error && <p className="login-error-message">{error}</p>}
         
         <form onSubmit={handleLogin} className="login-form">
-          {/* Campo de Correo Electrónico */}
           <div className="form-group">
             <label htmlFor="login-correo">Correo Electrónico</label>
             <input
@@ -67,11 +64,9 @@ function LoginPage1() {
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
               required
-              aria-label="Correo Electrónico"
             />
           </div>
 
-          {/* Campo de Contraseña */}
           <div className="form-group">
             <label htmlFor="login-password">Contraseña</label>
             <input
@@ -81,11 +76,18 @@ function LoginPage1() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              aria-label="Contraseña"
             />
           </div>
 
-          {/* Botón de Iniciar Sesión */}
+          {/* CAPTCHA SIEMPRE VISIBLE */}
+          <div className="form-group">
+            <label>Verificación de Seguridad</label>
+            <Turnstile
+              sitekey="0x4AAAAAABkE_EeCCwrHE8PT" // Cambia por tu sitekey real
+              onVerify={(token) => setCaptchaToken(token)}
+            />
+          </div>
+
           <button type="submit" className="login-button" disabled={isLoading}>
             {isLoading ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
@@ -93,7 +95,7 @@ function LoginPage1() {
           <div className="login-links">
             <Link to="/recuperar-password" className="link-button">¿Olvidaste tu contraseña?</Link>
             <span>|</span>
-            <Link to="/register/cliente" className="link-button">Crear cuenta nueva</Link> 
+            <Link to="/register/cliente" className="link-button">Crear cuenta nueva</Link>
           </div>
         </form>
       </div>

@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
-import './RegisterPage.css'; //ESTE ES EL COLOR
-//import Pie from '../../ComponentesGeneral/footer'; // Asegúrate que la ruta sea correcta
+import Turnstile from 'react-turnstile'; // AÑADIDO
+import './RegisterPage.css';
 
 const RegisterPage = () => {
-    // --- ESTADO CORREGIDO ---
     const [formData, setFormData] = useState({
         nombre: '',
-        apellido: '',        // Corregido
-        identidad: '',      // Añadido
-        correo: '',        // Corregido
+        apellido: '',
+        identidad: '',
+        correo: '',
         password: '',
-        confirmPassword: '',        
-        especialidad: '',  // Corregido
-        
+        confirmPassword: '',
+        especialidad: '',
     });
+
+    const [captchaToken, setCaptchaToken] = useState(''); // AÑADIDO
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -24,13 +24,12 @@ const RegisterPage = () => {
         const { confirmPassword, ...dataToSend } = userData;
 
         try {
-            // --- URL CORREGIDA (PUERTO 3001) ---
             const response = await fetch('http://localhost:3001/usuarios/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(dataToSend),
+                body: JSON.stringify({ ...dataToSend, captchaToken }), // AÑADIDO
             });
 
             const responseData = await response.json();
@@ -45,17 +44,16 @@ const RegisterPage = () => {
 
             alert('Usuario registrado exitosamente!');
             console.log('Registered user:', responseData);
-            setFormData({ // Limpiar formulario
-                 nombre: '', identidad: '', correo: '', password: '', confirmPassword: '',
-                  especialidad: ''
+            setFormData({
+                nombre: '', apellido: '', identidad: '', correo: '', password: '', confirmPassword: '', especialidad: ''
             });
-
+            setCaptchaToken(''); // AÑADIDO
         } catch (error) {
             console.error('Error registering user:', error);
             if (error instanceof SyntaxError) {
-                 alert('Ocurrió un error al procesar la respuesta del servidor.');
+                alert('Ocurrió un error al procesar la respuesta del servidor.');
             } else {
-                 alert('Ocurrió un error de red al intentar registrar el usuario.');
+                alert('Ocurrió un error de red al intentar registrar el usuario.');
             }
         }
     };
@@ -68,88 +66,59 @@ const RegisterPage = () => {
             return;
         }
 
-        // --- VALIDACIÓN CORREGIDA ---
-        // Ajusta si bio no es requerido
-        if (!formData.nombre || !formData.identidad || !formData.correo || !formData.password || !formData.especialidad  ) {
-             alert('Faltan campos requeridos (nombre, identidad, correo, contraseña, rol, bio).');
-             return;
+        if (!formData.nombre || !formData.identidad || !formData.correo || !formData.password || !formData.especialidad) {
+            alert('Faltan campos requeridos.');
+            return;
         }
-        
+
+        if (!captchaToken) { // AÑADIDO
+            alert('Por favor completa el CAPTCHA.');
+            return;
+        }
 
         console.log('Form data to be sent:', formData);
         registerUser(formData);
     };
 
-    // --- JSX CORREGIDO ---
     return (
         <div>
             <h2>Registro de Entidad</h2>
             <form onSubmit={handleSubmit}>
                 <div>
                     <label>Nombre Entidad:</label>
-                    <input
-                        type="text"
-                        name="nombre" // Corregido
-                        value={formData.nombre}
-                        onChange={handleChange}
-                        required
-                    />
+                    <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
                 </div>
                 <div>
-                    <label>Ruc:</label>
-                    <input
-                        type="text"
-                        name="identidad" // Corregido ver
-                        value={formData.identidad}
-                        onChange={handleChange}
-                        required
-                    />
+                    <label>RUC:</label>
+                    <input type="text" name="identidad" value={formData.identidad} onChange={handleChange} required />
                 </div>
                 <div>
-                    <label>Correo de Institucion:</label>
-                    <input
-                        type="email"
-                        name="correo" // Corregido
-                        value={formData.correo}
-                        onChange={handleChange}
-                        required
-                    />
+                    <label>Correo Institucional:</label>
+                    <input type="email" name="correo" value={formData.correo} onChange={handleChange} required />
                 </div>
                 <div>
                     <label>Contraseña:</label>
-                    <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                    />
+                    <input type="password" name="password" value={formData.password} onChange={handleChange} required />
                 </div>
                 <div>
                     <label>Confirmar Contraseña:</label>
-                    <input
-                        type="password"
-                        name="confirmPassword"
-                        value={formData.confirmPassword}
-                        onChange={handleChange}
-                        required
-                    />
+                    <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required />
                 </div>
                 <div>
                     <label>Rol:</label>
-                    <select
-                        name="especialidad" // Corregido
-                        value={formData.especialidad}
-                        onChange={handleChange}
-                        // required // Quitar si es opcional
-                    >
-                        <option value="">Seleccione funcion</option>
+                    <select name="especialidad" value={formData.especialidad} onChange={handleChange}>
+                        <option value="">Seleccione función</option>
                         <option value="Administrador">Administrador de Polideportivo</option>
                         <option value="Proveedor">Proveedor de Servicio</option>
-                        {/* Agrega más opciones */}
                     </select>
                 </div>
-                 
+                <div>
+                    <label>Verificación de Seguridad:</label>
+                    <Turnstile
+                        sitekey="0x4AAAAAABkE_EeCCwrHE8PT" // CAMBIA por tu Site Key real
+                        onVerify={(token) => setCaptchaToken(token)}
+                    />
+                </div>
                 <button type="submit">Registrarse</button>
             </form>
         </div>
