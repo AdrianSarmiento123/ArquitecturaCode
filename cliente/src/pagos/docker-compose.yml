@@ -1,0 +1,23 @@
+version: '3'
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+    ports:
+      - "5432:5432"
+
+  reservas:
+    build: ./reservas
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3001"
+
+  pagos:
+    build: ./pagos
+    depends_on:
+      - postgres
+    ports:
+      - "3002:3002"
