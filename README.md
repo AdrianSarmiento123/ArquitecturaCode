@@ -20,3 +20,4 @@
 *     npm install nodemailer  
 4 en la carpeta raíz
 *     npm install express-validator
+*     npm install react-toastify
