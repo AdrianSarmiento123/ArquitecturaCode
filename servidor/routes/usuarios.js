@@ -276,5 +276,108 @@ router.post("/me/avatar", authMiddleware(), upload.single("avatar"), async (req,
     res.status(500).json({ error: "Error al subir avatar." });
   }
 });
+// Recuperación de contraseña
+
+const { enviarCodigoRecuperacion } = require("../utils/emailService");
+const bcrypt = require("bcrypt"); // ✅ Agregado para hashear la contraseña
+
+// In-memory store (solo para demo; en producción usa DB o Redis)
+const recoveryCodes = new Map();
+
+/**
+ * 1. Solicitar recuperación
+ */
+router.post("/recover/request", async (req, res) => {
+  const { correo } = req.body;
+
+  if (!correo) {
+    return res.status(400).json({ error: "Correo requerido." });
+  }
+
+  try {
+    const user = await usuarios.findOne({ where: { correo } });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    // Generar un código simple de 6 dígitos
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Guardar en memoria (clave=correo)
+    recoveryCodes.set(correo, {
+      codigo,
+      expiresAt: Date.now() + 15 * 60 * 1000 // 15 minutos
+    });
+
+    // Enviar correo
+    await enviarCodigoRecuperacion(correo, codigo);
+
+    res.json({ mensaje: "Se ha enviado un código de recuperación a tu correo." });
+  } catch (error) {
+    console.error("Error en recuperación:", error);
+    res.status(500).json({ error: "Error al solicitar recuperación." });
+  }
+});
+
+/**
+ * 2. Verificar código
+ */
+router.post("/recover/verify", async (req, res) => {
+  const { correo, codigo } = req.body;
+
+  const record = recoveryCodes.get(correo);
+
+  if (!record || record.codigo !== codigo) {
+    return res.status(400).json({ error: "Código inválido o expirado." });
+  }
+
+  if (record.expiresAt < Date.now()) {
+    recoveryCodes.delete(correo);
+    return res.status(400).json({ error: "El código ha expirado." });
+  }
+
+  res.json({ mensaje: "Código válido." });
+});
+
+/**
+ * 3. Restablecer contraseña
+ */
+router.post("/recover/reset", async (req, res) => {
+  const { correo, codigo, nuevaPassword } = req.body;
+
+  const record = recoveryCodes.get(correo);
+
+  if (!record || record.codigo !== codigo) {
+    return res.status(400).json({ error: "Código inválido o expirado." });
+  }
+
+  if (record.expiresAt < Date.now()) {
+    recoveryCodes.delete(correo);
+    return res.status(400).json({ error: "El código ha expirado." });
+  }
+
+  try {
+    const user = await usuarios.findOne({ where: { correo } });
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado." });
+    }
+
+    // ✅ Hashear la nueva contraseña antes de guardar
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(nuevaPassword, salt);
+
+    await user.save();
+
+    // Eliminar código usado
+    recoveryCodes.delete(correo);
+
+    res.json({ mensaje: "Contraseña restablecida correctamente." });
+  } catch (error) {
+    console.error("Error al restablecer contraseña:", error);
+    res.status(500).json({ error: "Error al actualizar contraseña." });
+  }
+});
 
 module.exports = router;
