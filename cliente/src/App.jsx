@@ -12,6 +12,9 @@ import DashboardUsuario from './Modulos/GestionUsuarios/DashboardUsuario';
 import DashboardEntidad from './Modulos/GestionUsuarios/DashboardEntidad';
 import EditarPerfil from './Modulos/GestionUsuarios/EditarPerfil';
 import HistorialReservas from './Modulos/GestionUsuarios/HistorialReservas';
+import WizardRecuperacion from '../src/Modulos/GestionUsuarios/RecuperarCuenta/WizardRecuperacion';
+import PanelProveedores from './Modulos/Proveedores&Mantenimiento/PanelProveedores';
+
 
 function App() {
   return (
@@ -28,6 +31,9 @@ function App() {
               <Route path="/dashboard/entidad/:id" element={<DashboardEntidad />} />
               <Route path="/editar-perfil/:id" element={<EditarPerfil />} />
               <Route path="/historial/:id" element={<HistorialReservas />} />
+              <Route path="/recuperar-password" element={<WizardRecuperacion />} />
+              <Route path="/proveedores/panel" element={<PanelProveedores />} />
+
           </Routes>
       </main>
       <Pie /> 

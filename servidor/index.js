@@ -15,8 +15,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const usuariosRouter = require('./routes/usuarios');
 app.use("/usuarios", usuariosRouter);
 
+// NUEVO: rutas para proveedores y mantenimiento
+const proveedoresRouter = require('./routes/proveedores');
+app.use("/proveedores", proveedoresRouter); // <-- Ruta base para módulo 03
+
 db.sequelize.sync().then(() => {
   app.listen(3001, () => {
     console.log("Servidor corriendo en puerto 3001");
   });
 });
+
